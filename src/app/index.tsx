@@ -9,8 +9,8 @@ import {
    UserRoundPlus,
    ArrowRight,
 } from 'lucide-react-native';
-import { Input } from '@/components/Input';
-import { Button } from '@/components/Button';
+import { Input } from '@/components/input';
+import { Button } from '@/components/button';
 import { colors } from '@/styles/colors';
 
 enum StepForm {
