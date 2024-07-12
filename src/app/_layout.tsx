@@ -6,8 +6,10 @@ import {
    Inter_500Medium,
    Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
+
 import { Loading } from '@/components/loading';
 
+import '@/utils/dayjsLocaleConfig';
 import '@/styles/global.css';
 
 export default function Layout() {
