@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
-import { Keyboard, TouchableOpacity, View } from 'react-native';
+import { Alert, Keyboard, TouchableOpacity, View } from 'react-native';
 import {
    CalendarRange,
    Info,
@@ -10,8 +10,10 @@ import {
    Settings2,
    Calendar as IconCalendar,
 } from 'lucide-react-native';
+import { DateData } from 'react-native-calendars';
 
 import { Button } from '@/components/button';
+import { Calendar } from '@/components/calendar';
 import { Input } from '@/components/input';
 import { Loading } from '@/components/loading';
 import { Modal } from '@/components/modal';
@@ -19,6 +21,7 @@ import { Activities } from './activities';
 import { Details } from './details';
 
 import { TripDetails, tripServer } from '@/server/trip-server';
+import { calendarUtils, DatesSelected } from '@/utils/calendarUtils';
 import { colors } from '@/styles/colors';
 
 export type TripData = TripDetails & { when: string };
@@ -31,12 +34,14 @@ enum MODAL {
 
 export default function Trip() {
    const [isLoadindTrip, setIsLoadingTrip] = useState(true);
+   const [isUpdatingTrip, setIsUpdatingTrip] = useState(false);
 
    const [tripDetails, setTripDetails] = useState({} as TripData);
    const [option, setOption] = useState<'activity' | 'details'>('activity');
    const tripId = useLocalSearchParams<{ id: string }>().id;
    const [showModal, setShowModal] = useState(MODAL.NONE);
    const [destination, setDestination] = useState('');
+   const [selectedDates, setSelectedDates] = useState({} as DatesSelected);
 
    async function getTripDetails() {
       try {
@@ -57,6 +62,8 @@ export default function Trip() {
          const ends_at = dayjs(trip.ends_at).format('DD');
          const month = dayjs(trip.starts_at).format('MMM');
 
+         setDestination(trip.destination);
+
          setTripDetails({
             ...trip,
             when: `${destination} de ${starts_at} a ${ends_at} de ${month}.`,
@@ -65,6 +72,48 @@ export default function Trip() {
          console.log(error);
       } finally {
          setIsLoadingTrip(false);
+      }
+   }
+
+   function handleSelectedDates(selectedDay: DateData) {
+      const dates = calendarUtils.orderStartsAtAndEndsAt({
+         startsAt: selectedDates.startsAt,
+         endsAt: selectedDates.endsAt,
+         selectedDay,
+      });
+      setSelectedDates(dates);
+   }
+   async function handleUpdateTrip() {
+      try {
+         if (!tripId) {
+            return;
+         }
+         if (!destination || !selectedDates.startsAt || !selectedDates.endsAt) {
+            return Alert.alert(
+               'Atualizar viagem',
+               'Lembre-se de além de preencher o destino, preencher o início e fim da viagem.',
+            );
+         }
+         setIsUpdatingTrip(true);
+         await tripServer.update({
+            id: tripId,
+            destination,
+            starts_at: dayjs(selectedDates.startsAt.dateString).toString(),
+            ends_at: dayjs(selectedDates.endsAt.dateString).toString(),
+         });
+         Alert.alert('Atualizar viagem', 'Viagem atualizada com sucesso!', [
+            {
+               text: 'OK',
+               onPress: () => {
+                  setShowModal(MODAL.NONE);
+                  getTripDetails();
+               },
+            },
+         ]);
+      } catch (error) {
+         console.log(error);
+      } finally {
+         setIsUpdatingTrip(false);
       }
    }
 
@@ -163,12 +212,35 @@ export default function Trip() {
                   />
                   <Input.Field
                      placeholder="Quando?"
-                     onChangeText={setDestination}
-                     value={destination}
+                     value={selectedDates.formatDatesInText}
                      onPressIn={() => setShowModal(MODAL.CALENDAR)}
                      onFocus={() => Keyboard.dismiss()}
                   />
                </Input>
+
+               <Button
+                  onPress={handleUpdateTrip}
+                  isLoading={isUpdatingTrip}>
+                  <Button.Title>Atualizar</Button.Title>
+               </Button>
+            </View>
+         </Modal>
+         <Modal
+            title="Selecionar datas"
+            subtitle="Selecione a data de ida e de volta da viagem"
+            visible={showModal === MODAL.CALENDAR}
+            onClose={() => setShowModal(MODAL.NONE)}>
+            <View className="gap-4 mt-4">
+               <Calendar
+                  minDate={dayjs(
+                     new Date(Date.now() + 24 * 60 * 60 * 1000),
+                  ).toISOString()}
+                  onDayPress={handleSelectedDates}
+                  markedDates={selectedDates.dates}
+               />
+               <Button onPress={() => setShowModal(MODAL.UPDATE_TRIP)}>
+                  <Button.Title>Confirmar</Button.Title>
+               </Button>
             </View>
          </Modal>
       </View>
