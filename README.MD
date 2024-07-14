@@ -40,7 +40,7 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 
 ## 💻 Projeto
 
-O plann.er é um aplicativo feito para criar e organizar viagens de uma forma muito simples e intuitiva. Ele fornece recursos para organizar o cronograma da viagem e compartilhar links úteis para os participantes.
+O plann.er é um aplicativo feito para criar e organizar viagens de uma forma muito simples e intuitiva. Ele fornece recursos para organizar o cronograma da viagem e compartilhar links úteis com os participantes.
 
 <div id='licenca'></div>
 
@@ -54,7 +54,7 @@ Esse projeto está sob a licença MIT.
 
 <br>
 <p align="center">
-  <img alt="NLW16 - Journey" src="./.github/app.gif" width="100%">
+  <img alt="NLW16 - Journey" src="./.github/app.gif" width="50%">
 </p>
 
 ---
